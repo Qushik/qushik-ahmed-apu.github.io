@@ -740,7 +740,10 @@
 
 <div class="footer-note">© 2026 Qushik Ahmed Apu. Built and maintained as a living engineering portfolio.</div>
 
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
 <script>
+  // Mobile nav toggle
   document.getElementById('navToggle').addEventListener('click', function () {
     document.getElementById('navLinks').classList.toggle('open');
   });
@@ -749,6 +752,91 @@
       document.getElementById('navLinks').classList.remove('open');
     });
   });
+
+  // Nav shadow + back-to-top visibility on scroll
+  var nav = document.querySelector('.site-nav');
+  var backToTop = document.getElementById('backToTop');
+  window.addEventListener('scroll', function () {
+    var scrolled = window.scrollY > 20;
+    nav.classList.toggle('scrolled', scrolled);
+    backToTop.classList.toggle('show', window.scrollY > 500);
+  }, { passive: true });
+
+  backToTop.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // Active nav link highlighting based on scroll position
+  var sections = Array.from(document.querySelectorAll('section[id]'));
+  var navLinkMap = {};
+  document.querySelectorAll('.nav-links a').forEach(function (link) {
+    navLinkMap[link.getAttribute('href').slice(1)] = link;
+  });
+  var navObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      var link = navLinkMap[entry.target.id];
+      if (!link) return;
+      if (entry.isIntersecting) {
+        Object.values(navLinkMap).forEach(function (l) { l.classList.remove('active'); });
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-45% 0px -50% 0px' });
+  sections.forEach(function (s) { navObserver.observe(s); });
+
+  // Scroll-reveal for cards, tables and detail blocks
+  var revealTargets = document.querySelectorAll(
+    '.exp-card, .project-card, .feature-card, .closing-card, .toolkit-item, .detail-block, .los-table, .work-pair, .gallery, .section-head'
+  );
+  revealTargets.forEach(function (el) { el.classList.add('reveal'); });
+
+  var revealObserver = new IntersectionObserver(function (entries, obs) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  revealTargets.forEach(function (el) { revealObserver.observe(el); });
+
+  // Animated count-up for snapshot stats
+  var statEls = document.querySelectorAll('.stat-number');
+  var statsAnimated = false;
+  function animateStats() {
+    if (statsAnimated) return;
+    statsAnimated = true;
+    statEls.forEach(function (el) {
+      var original = el.textContent.trim();
+      var match = original.match(/^(\d+(?:\.\d+)?)/);
+      if (!match) return;
+      var target = parseFloat(match[1]);
+      var suffix = original.slice(match[1].length);
+      var duration = 1100;
+      var startTime = null;
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var current = (target * eased);
+        el.textContent = (target % 1 === 0 ? Math.round(current) : current.toFixed(1)) + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  var statsSection = document.querySelector('.stats');
+  if (statsSection) {
+    var statsObserver = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          animateStats();
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.4 });
+    statsObserver.observe(statsSection);
+  }
 </script>
 
 </body>
